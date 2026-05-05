@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Koreksi Sakubun AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-base: #f7f4ee;
+            --bg-panel: #ffffff;
+            --bg-panel-hover: #f0ede5;
+            --text-main: #1e1c1a;
+            --text-muted: #7a7570;
+            --border-color: rgba(0,0,0,0.09);
+            --accent: #b5451b;
+            --accent-light: rgba(181,69,27,0.1);
+            --accent-2: #2b6cb0;
+
+            --err-g-bg: #dbeafe; --err-g-text: #1d4ed8; --err-g-border: #93c5fd;
+            --err-k-bg: #d1fae5; --err-k-text: #065f46; --err-k-border: #6ee7b7;
+            --err-v-bg: #fff7ed; --err-v-text: #c2410c; --err-v-border: #fed7aa;
+            --err-p-bg: #fce7f3; --err-p-text: #9d174d; --err-p-border: #f9a8d4;
+
+            --nav-bg: rgba(247,244,238,0.95);
+            --shadow-up: 0 -2px 20px rgba(0,0,0,0.06);
+            --modal-bg: rgba(0,0,0,0.35);
+        }
+
+        [data-theme="dark"] {
+            --bg-base: #0d0c0a;
+            --bg-panel: #181613;
+            --bg-panel-hover: #222019;
+            --text-main: rgba(238,230,216,0.95);
+            --text-muted: rgba(238,230,216,0.45);
+            --border-color: rgba(255,255,255,0.08);
+            --accent: #e07a5f;
+            --accent-light: rgba(224,122,95,0.15);
+            --accent-2: #63b3ed;
+
+            --err-g-bg: rgba(29,78,216,0.18); --err-g-text: #93c5fd; --err-g-border: rgba(29,78,216,0.35);
+            --err-k-bg: rgba(6,95,70,0.2); --err-k-text: #6ee7b7; --err-k-border: rgba(6,95,70,0.4);
+            --err-v-bg: rgba(194,65,12,0.18); --err-v-text: #fed7aa; --err-v-border: rgba(194,65,12,0.4);
+            --err-p-bg: rgba(157,23,77,0.18); --err-p-text: #f9a8d4; --err-p-border: rgba(157,23,77,0.4);
+
+            --nav-bg: rgba(18,16,13,0.95);
+            --shadow-up: 0 -2px 20px rgba(0,0,0,0.4);
+            --modal-bg: rgba(0,0,0,0.65);
+        }
+
+        *{box-sizing:border-box;margin:0;padding:0;}
+        *:not(span){transition:background-color .25s,border-color .25s,color .25s;}
+
+        body{
+            background:var(--bg-base);
+            color:var(--text-main);
+            font-family:'Noto Sans JP',sans-serif;
+            overflow-x:hidden;
+            -webkit-tap-highlight-color:transparent;
+        }
+
+        .jp-serif{font-family:'Noto Serif JP',serif;}
+        .mono{font-family:'Space Mono',monospace;}
+
+        .bg-texture{
+            position:fixed;inset:0;pointer-events:none;z-index:-1;
+            background-image:radial-gradient(circle at 20% 10%,var(--accent-light) 0%,transparent 55%),
+                             radial-gradient(circle at 85% 80%,rgba(43,108,176,0.06) 0%,transparent 50%);
+        }
+
+        .panel{
+            background:var(--bg-panel);
+            border:1px solid var(--border-color);
+            border-radius:14px;
+        }
+
+        .input-area{
+            background:var(--bg-base);
+            border:1.5px solid var(--border-color);
+            color:var(--text-main);
+            border-radius:12px;
+            font-family:'Noto Serif JP',serif;
+            font-size:1.05rem;
+            resize:none;
+            width:100%;
+            padding:14px 16px;
+            transition:border-color .2s;
+        }
+        .input-area:focus{outline:none;border-color:var(--accent);}
+        .input-area::placeholder{color:var(--text-muted);}
+
+        .btn-primary{
+            background:var(--accent);
+            color:#fff;
+            font-weight:600;
+            font-family:'Noto Sans JP',sans-serif;
+            border-radius:12px;
+            border:none;
+            cursor:pointer;
+            letter-spacing:0.02em;
+        }
+        .btn-primary:active{transform:scale(0.98);}
+        .btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+
+        /* Highlighted error spans */
+        .err-span{
+            position:relative;display:inline;padding:1px 3px;
+            border-radius:4px;cursor:pointer;
+            border-bottom:2px solid transparent;
+            transition:all .15s;
+        }
+        .err-span.active{outline:2px solid var(--accent);outline-offset:2px;}
+        .err-span.et-grammar{background:var(--err-g-bg);border-bottom-color:var(--err-g-border);color:var(--err-g-text);}
+        .err-span.et-kanji{background:var(--err-k-bg);border-bottom-color:var(--err-k-border);color:var(--err-k-text);}
+        .err-span.et-vocab{background:var(--err-v-bg);border-bottom-color:var(--err-v-border);color:var(--err-v-text);}
+        .err-span.et-punct{background:var(--err-p-bg);border-bottom-color:var(--err-p-border);color:var(--err-p-text);}
+
+        /* Error badges */
+        .err-badge{padding:2px 7px;border-radius:6px;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid transparent;}
+        .badge-grammar{background:var(--err-g-bg);color:var(--err-g-text);border-color:var(--err-g-border);}
+        .badge-kanji{background:var(--err-k-bg);color:var(--err-k-text);border-color:var(--err-k-border);}
+        .badge-vocab{background:var(--err-v-bg);color:var(--err-v-text);border-color:var(--err-v-border);}
+        .badge-punct{background:var(--err-p-bg);color:var(--err-p-text);border-color:var(--err-p-border);}
+
+        /* Bottom nav */
+        .bottom-nav{
+            position:fixed;bottom:0;left:0;right:0;
+            background:var(--nav-bg);
+            backdrop-filter:blur(16px);
+            border-top:1px solid var(--border-color);
+            display:flex;justify-content:space-around;
+            padding:10px 0 calc(10px + env(safe-area-inset-bottom));
+            z-index:40;
+            box-shadow:var(--shadow-up);
+        }
+        .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text-muted);font-size:.65rem;cursor:pointer;width:25%;padding:4px 0;}
+        .nav-item.active{color:var(--accent);}
+        .nav-icon{font-size:1.4rem;}
+
+        /* Screens */
+        .screen{display:none;padding-bottom:90px;min-height:100vh;}
+        .screen.active{display:block;animation:fadeIn .25s ease;}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+        /* Loader */
+        .loader-overlay{
+            position:fixed;inset:0;background:var(--modal-bg);
+            backdrop-filter:blur(6px);
+            display:none;justify-content:center;align-items:center;
+            z-index:100;flex-direction:column;
+        }
+        .spinner{
+            width:44px;height:44px;
+            border:3px solid var(--border-color);
+            border-top-color:var(--accent);
+            border-radius:50%;
+            animation:spin 0.9s linear infinite;
+        }
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        /* Modal */
+        .modal-overlay{
+            position:fixed;inset:0;background:var(--modal-bg);backdrop-filter:blur(4px);
+            display:none;justify-content:center;align-items:flex-end;z-index:100;
+        }
+        .modal-overlay.active{display:flex;}
+        .modal-content{
+            background:var(--bg-base);width:100%;max-width:450px;
+            border-radius:20px 20px 0 0;padding:24px;
+            border-top:1px solid var(--border-color);
+            animation:slideUp .28s ease-out forwards;
+        }
+        @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+
+        /* Error list items */
+        .err-list-item{
+            background:var(--bg-panel);border:1px solid var(--border-color);
+            border-radius:12px;padding:14px;margin-bottom:10px;
+            cursor:pointer;transition:border-color .2s,background .2s;
+            display:flex;gap:12px;align-items:flex-start;
+        }
+        .err-list-item:hover{border-color:var(--accent);}
+        .err-list-item.active{border-color:var(--accent);background:var(--accent-light);}
+
+        /* Sakubun text */
+        .sakubun-text{line-height:2.4;font-size:1.1rem;letter-spacing:.03em;word-break:break-all;}
+
+        /* Image preview */
+        #image-preview-container{display:none;position:relative;width:100%;border-radius:10px;overflow:hidden;margin-top:10px;}
+        #image-preview{width:100%;height:110px;object-fit:cover;}
+        .remove-img-btn{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.85rem;}
+
+        /* Score ring */
+        #score-circle{transition:stroke-dasharray .6s ease;}
+
+        /* Toast */
+        #toast{
+            position:fixed;top:5rem;left:50%;transform:translate(-50%,-16px);
+            background:var(--bg-panel);border:1px solid var(--accent);
+            color:var(--text-main);padding:8px 18px;border-radius:99px;
+            box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:200;
+            transition:opacity .3s,transform .3s;
+            opacity:0;pointer-events:none;font-size:.85rem;white-space:nowrap;
+        }
+
+        /* Upload drop area */
+        .upload-area{
+            background:var(--bg-panel);
+            border:1.5px dashed var(--border-color);
+            border-radius:14px;
+            text-align:center;
+            cursor:pointer;
+            padding:28px 20px;
+            transition:border-color .2s,background .2s;
+        }
+        .upload-area:hover{border-color:var(--accent);background:var(--accent-light);}
+
+        ::-webkit-scrollbar{width:5px;}
+        ::-webkit-scrollbar-track{background:transparent;}
+        ::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:10px;}
+    </style>
+</head>
+<body data-theme="dark">
+
+<div class="bg-texture"></div>
+
+<!-- Header -->
+<header style="position:sticky;top:0;z-index:30;background:rgba(var(--bg-base-rgb,13,12,10),.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--border-color);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.5rem;color:var(--accent);">&#x4eba;&#x6587;</span>
+        <div>
+            <h1 style="font-size:1rem;font-weight:700;line-height:1.1;letter-spacing:.04em;">
+                <span style="color:var(--text-muted);font-weight:400;font-size:.75rem;display:block;letter-spacing:.12em;text-transform:uppercase;" class="mono">AI POWERED</span>
+                Koreksi <span style="color:var(--accent);">Sakubun</span>
+            </h1>
+        </div>
+    </div>
+    <button onclick="toggleTheme()" style="background:var(--bg-panel);border:1px solid var(--border-color);padding:8px;border-radius:10px;cursor:pointer;color:var(--text-main);display:flex;align-items:center;">
+        <i class="ph ph-moon" id="theme-icon" style="font-size:1.1rem;"></i>
+    </button>
+</header>
+
+<!-- Main -->
+<main style="max-width:480px;margin:0 auto;position:relative;">
+
+    <!-- HOME SCREEN -->
+    <section id="screen-home" class="screen active" style="padding:20px;">
+
+        <div style="margin-bottom:20px;">
+            <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:6px;" class="jp-serif">練習を始めましょう！</h2>
+            <p style="color:var(--text-muted);font-size:.85rem;line-height:1.6;">Unggah foto tulisan tangan atau ketik teks Jepang untuk dikoreksi AI secara detail.</p>
+        </div>
+
+        <!-- Upload area -->
+        <div class="upload-area" onclick="document.getElementById('file-input').click()" style="margin-bottom:14px;">
+            <i class="ph ph-camera" style="font-size:2.2rem;color:var(--accent);display:block;margin-bottom:8px;"></i>
+            <p style="font-weight:600;margin-bottom:4px;font-size:.95rem;">Scan / Unggah Foto</p>
+            <p style="color:var(--text-muted);font-size:.75rem;">JPG, PNG · Maks 5MB</p>
+            <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+
+            <div id="image-preview-container" onclick="event.stopPropagation()">
+                <img id="image-preview" src="" alt="Preview">
+                <div class="remove-img-btn" onclick="removeImage()"><i class="ph ph-x"></i></div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div style="flex:1;height:1px;background:var(--border-color);"></div>
+            <span style="color:var(--text-muted);font-size:.75rem;">atau ketik langsung</span>
+            <div style="flex:1;height:1px;background:var(--border-color);"></div>
+        </div>
+
+        <!-- Text input -->
+        <div style="position:relative;margin-bottom:18px;">
+            <textarea id="text-input" rows="5" class="input-area" placeholder="私は昨日学校へ行きました。友達と一緒に..."></textarea>
+            <div id="char-count" style="position:absolute;bottom:10px;right:12px;font-size:.72rem;color:var(--text-muted);" class="mono">0/1000</div>
+        </div>
+
+        <!-- Error type legend -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;">
+            <span class="err-badge badge-grammar"><i class="ph ph-text-aa" style="margin-right:3px;"></i>Tata Bahasa</span>
+            <span class="err-badge badge-kanji"><i class="ph ph-translate" style="margin-right:3px;"></i>Kanji</span>
+            <span class="err-badge badge-vocab"><i class="ph ph-book-open-text" style="margin-right:3px;"></i>Kosakata</span>
+            <span class="err-badge badge-punct"><i class="ph ph-quotes" style="margin-right:3px;"></i>Tanda Baca</span>
+        </div>
+
+        <button id="btn-koreksi" onclick="processCorrection()" class="btn-primary" style="width:100%;padding:16px;font-size:1rem;display:flex;justify-content:center;align-items:center;gap:8px;">
+            <i class="ph ph-magic-wand"></i> Koreksi Sekarang
+        </button>
+    </section>
+
+
+    <!-- DETAIL SCREEN -->
+    <section id="screen-detail" class="screen" style="padding:16px 20px 20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+            <button onclick="switchScreen('home')" style="background:var(--bg-panel);border:1px solid var(--border-color);width:36px;height:36px;border-radius:10px;cursor:pointer;color:var(--text-main);display:flex;align-items:center;justify-content:center;">
+                <i class="ph ph-arrow-left"></i>
+            </button>
+            <h2 style="font-weight:700;font-size:1.1rem;">Hasil Koreksi</h2>
+        </div>
+
+        <!-- Score + Summary -->
+        <div class="panel" style="padding:18px;margin-bottom:18px;display:flex;align-items:center;gap:18px;">
+            <div style="position:relative;width:76px;height:76px;flex-shrink:0;">
+                <svg viewBox="0 0 36 36" style="width:100%;height:100%;transform:rotate(-90deg);">
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border-color)" stroke-width="2.5"/>
+                    <path id="score-circle" fill="none" stroke="var(--accent)" stroke-width="2.8" stroke-linecap="round"
+                          stroke-dasharray="0,100"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                    <span id="detail-score" style="font-size:1.3rem;font-weight:700;color:var(--accent);" class="mono">–</span>
+                </div>
+            </div>
+            <div style="flex:1;">
+                <p style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;" class="mono">Ringkasan AI</p>
+                <p id="detail-summary" style="font-size:.88rem;line-height:1.65;color:var(--text-main);">–</p>
+            </div>
+        </div>
+
+        <!-- Tab toggle -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg-panel);border:1px solid var(--border-color);padding:4px;border-radius:10px;margin-bottom:14px;">
+            <button id="tab-orig" onclick="toggleTextView('orig')" style="padding:8px;border-radius:8px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;background:var(--bg-base);color:var(--text-main);">Teks Asli (Error)</button>
+            <button id="tab-corr" onclick="toggleTextView('corr')" style="padding:8px;border-radius:8px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text-muted);">Hasil Perbaikan</button>
+        </div>
+
+        <!-- Text display -->
+        <div class="panel" style="padding:18px;margin-bottom:20px;min-height:120px;">
+            <div id="text-display-orig" class="sakubun-text jp-serif"></div>
+            <div id="text-display-corr" class="sakubun-text jp-serif" style="display:none;color:var(--accent);"></div>
+        </div>
+
+        <!-- Errors -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="font-weight:700;font-size:1rem;">Detail Kesalahan</h3>
+            <span id="error-count-badge" style="font-size:.72rem;background:var(--bg-panel);border:1px solid var(--border-color);padding:3px 10px;border-radius:6px;color:var(--text-muted);" class="mono">0</span>
+        </div>
+        <div id="no-error-msg" style="display:none;text-align:center;padding:40px 0;color:var(--text-muted);">
+            <i class="ph ph-check-circle" style="font-size:2.8rem;color:#10b981;display:block;margin-bottom:10px;"></i>
+            <p style="font-weight:600;">Sempurna! Tidak ada kesalahan ditemukan.</p>
+        </div>
+        <div id="errors-container"></div>
+    </section>
+
+
+    <!-- HISTORY SCREEN -->
+    <section id="screen-history" class="screen" style="padding:20px;">
+        <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:20px;">Riwayat</h2>
+        <div id="history-container" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div id="empty-history" style="display:none;text-align:center;padding:60px 0;color:var(--text-muted);">
+            <i class="ph ph-folder-open" style="font-size:3rem;display:block;margin-bottom:12px;opacity:.4;"></i>
+            <p>Belum ada riwayat koreksi.</p>
+        </div>
+    </section>
+
+
+    <!-- PROGRESS SCREEN -->
+    <section id="screen-progress" class="screen" style="padding:20px;">
+        <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:20px;">Progres</h2>
+
+        <div class="panel" style="padding:18px;margin-bottom:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+                <div>
+                    <div id="prog-avg-score" style="font-size:1.8rem;font-weight:700;color:var(--accent);" class="mono">–</div>
+                    <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">Skor Rata-rata</div>
+                </div>
+                <div>
+                    <div id="prog-total" style="font-size:1.8rem;font-weight:700;" class="mono">0</div>
+                    <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">Total Sakubun</div>
+                </div>
+                <div>
+                    <div id="prog-best" style="font-size:1.8rem;font-weight:700;color:#10b981;" class="mono">–</div>
+                    <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">Skor Terbaik</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error breakdown -->
+        <div class="panel" style="padding:18px;margin-bottom:16px;">
+            <p style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;" class="mono">Distribusi Tipe Kesalahan</p>
+            <div id="err-breakdown" style="display:flex;flex-direction:column;gap:10px;">
+                <p style="color:var(--text-muted);font-size:.85rem;">Belum ada data.</p>
+            </div>
+        </div>
+
+        <!-- Recent scores chart -->
+        <div class="panel" style="padding:18px;">
+            <p style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;" class="mono">Skor 5 Koreksi Terakhir</p>
+            <div id="score-bars" style="display:flex;align-items:flex-end;gap:8px;height:80px;"></div>
+        </div>
+    </section>
+
+
+    <!-- PROFILE SCREEN -->
+    <section id="screen-profile" class="screen" style="padding:20px;">
+        <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:20px;">Profil & Pengaturan</h2>
+
+        <!-- Profile card -->
+        <div class="panel" style="padding:18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:var(--accent-light);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--accent);">
+                <i id="curr-account-avatar" class="ph ph-user"></i>
+            </div>
+            <div style="flex:1;">
+                <p id="curr-account-name" style="font-weight:700;font-size:1rem;">Pelajar Bahasa</p>
+                <p id="curr-account-level" style="font-size:.8rem;color:var(--text-muted);">JLPT N4 Level</p>
+            </div>
+            <button onclick="openAccountModal()" style="background:var(--accent-light);border:1px solid var(--accent);color:var(--accent);padding:6px 12px;border-radius:8px;font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:4px;">
+                <i class="ph ph-arrows-left-right"></i> Ganti
+            </button>
+        </div>
+
+        <!-- Settings list -->
+        <div class="panel" style="overflow:hidden;margin-bottom:16px;">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i class="ph ph-moon" style="color:var(--text-muted);font-size:1.2rem;"></i>
+                    <span style="font-size:.92rem;">Mode Gelap</span>
+                </div>
+                <label style="position:relative;display:inline-flex;align-items:center;cursor:pointer;">
+                    <input type="checkbox" id="theme-toggle-switch" checked onchange="toggleTheme()" style="position:absolute;opacity:0;width:0;height:0;">
+                    <div id="toggle-track" style="width:42px;height:24px;background:var(--accent);border-radius:99px;position:relative;transition:background .2s;">
+                        <div id="toggle-thumb" style="position:absolute;top:3px;right:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:right .2s;"></div>
+                    </div>
+                </label>
+            </div>
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i class="ph ph-globe" style="color:var(--text-muted);font-size:1.2rem;"></i>
+                    <span style="font-size:.92rem;">Bahasa UI</span>
+                </div>
+                <select id="lang-select" onchange="changeLanguage(this.value)" style="background:transparent;border:none;color:var(--text-muted);font-size:.85rem;outline:none;cursor:pointer;font-family:inherit;">
+                    <option value="id">Indonesia</option>
+                    <option value="en">English</option>
+                    <option value="ja">日本語</option>
+                </select>
+            </div>
+            <div onclick="clearHistory()" style="padding:14px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;color:#ef4444;">
+                <i class="ph ph-trash" style="font-size:1.2rem;"></i>
+                <span style="font-size:.92rem;">Hapus Semua Riwayat</span>
+            </div>
+        </div>
+
+        <div style="text-align:center;color:var(--text-muted);font-size:.72rem;line-height:1.8;" class="mono">
+            Koreksi Sakubun AI v4.0<br>
+            Powered by Claude claude-sonnet-4-20250514
+        </div>
+    </section>
+
+</main>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchScreen('home',this)">
+        <i class="ph ph-house nav-icon"></i>
+        <span style="font-size:.65rem;">Beranda</span>
+    </div>
+    <div class="nav-item" onclick="switchScreen('history',this)">
+        <i class="ph ph-clock-counter-clockwise nav-icon"></i>
+        <span style="font-size:.65rem;">Riwayat</span>
+    </div>
+    <div class="nav-item" onclick="switchScreen('progress',this)">
+        <i class="ph ph-chart-line-up nav-icon"></i>
+        <span style="font-size:.65rem;">Progres</span>
+    </div>
+    <div class="nav-item" onclick="switchScreen('profile',this)">
+        <i class="ph ph-user nav-icon"></i>
+        <span style="font-size:.65rem;">Profil</span>
+    </div>
+</nav>
+
+<!-- Loader -->
+<div id="loader" class="loader-overlay">
+    <div class="spinner" style="margin-bottom:16px;"></div>
+    <div class="panel" style="padding:12px 24px;text-align:center;">
+        <p style="font-weight:700;font-size:1rem;margin-bottom:3px;">Claude Sedang Menganalisis...</p>
+        <p id="loader-step" style="font-size:.8rem;color:var(--text-muted);">Memeriksa tata bahasa & kosakata</p>
+    </div>
+</div>
+
+<!-- Account Modal -->
+<div id="account-modal" class="modal-overlay" onclick="closeAccountModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <h3 style="font-weight:700;font-size:1.1rem;">Pilih Akun</h3>
+            <i class="ph ph-x" style="font-size:1.3rem;cursor:pointer;" onclick="closeAccountModal(true)"></i>
+        </div>
+        <div id="account-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+        <button onclick="closeAccountModal(true)" style="width:100%;padding:12px;border-radius:10px;background:var(--bg-base);border:1px solid var(--border-color);color:var(--text-main);cursor:pointer;font-size:.9rem;">Batal</button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast">Pesan</div>
+
+<script>
+// =====================================================
+// CLAUDE API — Engine pengoreksi sakubun
+// Menggunakan Anthropic Messages API via browser fetch
+// =====================================================
+async function callClaudeAPI(systemPrompt, userContent) {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 2000,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userContent }]
+        })
+    });
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error?.message || "API Error");
+    return data.content[0].text;
+}
+
+// =====================================================
+// DATA & STATE
+// =====================================================
+const accounts = [
+    { id: "user_001", name: "Pelajar Bahasa", level: "JLPT N4", icon: "ph-student" },
+    { id: "user_002", name: "Yamada Sensei", level: "Native / Guru", icon: "ph-chalkboard-teacher" },
+    { id: "user_003", name: "Pemula (Guest)", level: "Basic / Hiragana", icon: "ph-ghost" }
+];
+
+const uiTexts = {
+    id: { langName: "bahasa Indonesia", typeGrammar: "Tata Bahasa", typeKanji: "Kanji", typeVocab: "Kosakata", typePunct: "Tanda Baca" },
+    en: { langName: "English", typeGrammar: "Grammar", typeKanji: "Kanji", typeVocab: "Vocabulary", typePunct: "Punctuation" },
+    ja: { langName: "日本語", typeGrammar: "文法", typeKanji: "漢字", typeVocab: "語彙", typePunct: "句読点" }
+};
+
+let currentLang = 'id';
+let currentAccount = accounts[0];
+let currentImageBase64 = null;
+let correctionHistory = [];
+let currentAnalysis = null;
+
+// =====================================================
+// INIT
+// =====================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('sakubun_theme');
+    if (savedTheme === 'light') {
+        document.body.setAttribute('data-theme', 'light');
+        updateThemeUI('light');
+    }
+    const savedLang = localStorage.getItem('sakubun_lang');
+    if (savedLang && uiTexts[savedLang]) {
+        currentLang = savedLang;
+        document.getElementById('lang-select').value = savedLang;
+    }
+    const savedAccId = localStorage.getItem('sakubun_acc');
+    const acc = savedAccId ? accounts.find(a => a.id === savedAccId) : null;
+    switchAccount(acc || accounts[0], true);
+});
+
+// =====================================================
+// THEME
+// =====================================================
+function toggleTheme() {
+    const current = document.body.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem('sakubun_theme', next);
+    updateThemeUI(next);
+}
+
+function updateThemeUI(theme) {
+    const icon = document.getElementById('theme-icon');
+    const sw = document.getElementById('theme-toggle-switch');
+    const thumb = document.getElementById('toggle-thumb');
+    const track = document.getElementById('toggle-track');
+    if (theme === 'dark') {
+        icon.className = 'ph ph-moon';
+        if (sw) { sw.checked = true; }
+        if (thumb) thumb.style.right = '3px';
+        if (track) track.style.background = 'var(--accent)';
+    } else {
+        icon.className = 'ph ph-sun';
+        if (sw) { sw.checked = false; }
+        if (thumb) thumb.style.right = 'calc(100% - 21px)';
+        if (track) track.style.background = 'var(--border-color)';
+    }
+}
+
+// =====================================================
+// LANGUAGE
+// =====================================================
+function changeLanguage(langCode) {
+    currentLang = langCode;
+    localStorage.setItem('sakubun_lang', langCode);
+    if (currentAnalysis) renderCorrectionDetail(currentAnalysis);
+}
+
+// =====================================================
+// ACCOUNT
+// =====================================================
+function switchAccount(acc, isInit = false) {
+    currentAccount = acc;
+    localStorage.setItem('sakubun_acc', acc.id);
+    document.getElementById('curr-account-name').innerText = acc.name;
+    document.getElementById('curr-account-level').innerText = acc.level;
+    document.getElementById('curr-account-avatar').className = `ph ${acc.icon}`;
+    const saved = localStorage.getItem('sakubun_history_' + acc.id);
+    correctionHistory = saved ? JSON.parse(saved) : [];
+    renderHistory();
+    updateProgressData();
+    if (!isInit) { showToast(`Beralih ke: ${acc.name}`); switchScreen('home'); }
+}
+
+function openAccountModal() {
+    const list = document.getElementById('account-list');
+    list.innerHTML = '';
+    accounts.forEach(acc => {
+        const isActive = acc.id === currentAccount.id;
+        const div = document.createElement('div');
+        div.style.cssText = `padding:12px;border-radius:10px;border:1px solid ${isActive ? 'var(--accent)' : 'var(--border-color)'};background:${isActive ? 'var(--accent-light)' : 'var(--bg-panel)'};display:flex;align-items:center;gap:12px;cursor:pointer;`;
+        div.onclick = () => { switchAccount(acc); closeAccountModal(true); };
+        div.innerHTML = `
+            <div style="width:38px;height:38px;border-radius:50%;background:var(--bg-base);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:1.1rem;">
+                <i class="ph ${acc.icon}"></i>
+            </div>
+            <div style="flex:1;">
+                <p style="font-weight:600;font-size:.9rem;">${acc.name}</p>
+                <p style="font-size:.75rem;color:var(--text-muted);">${acc.level}</p>
+            </div>
+            ${isActive ? '<i class="ph ph-check-circle" style="font-size:1.4rem;color:var(--accent);"></i>' : ''}
+        `;
+        list.appendChild(div);
+    });
+    document.getElementById('account-modal').classList.add('active');
+}
+
+function closeAccountModal(force = false) {
+    if (force || (event && event.target === document.getElementById('account-modal'))) {
+        document.getElementById('account-modal').classList.remove('active');
+    }
+}
+
+// =====================================================
+// UI
+// =====================================================
+document.getElementById('text-input').addEventListener('input', function() {
+    document.getElementById('char-count').innerText = `${this.value.length}/1000`;
+});
+
+function switchScreen(screenId, navEl = null) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(`screen-${screenId}`).classList.add('active');
+    const navMap = { home: 0, detail: 0, history: 1, progress: 2, profile: 3 };
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (navEl) navEl.classList.add('active');
+    else document.querySelectorAll('.nav-item')[navMap[screenId] ?? 0].classList.add('active');
+    if (screenId === 'history') renderHistory();
+    if (screenId === 'progress') updateProgressData();
+    window.scrollTo(0, 0);
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.opacity = '1';
+    t.style.transform = 'translate(-50%,0)';
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%,-16px)'; }, 3000);
+}
+
+function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return showToast("Ukuran file terlalu besar (Maks 5MB)");
+    const reader = new FileReader();
+    reader.onload = e => {
+        currentImageBase64 = e.target.result.split(',')[1];
+        document.getElementById('image-preview').src = e.target.result;
+        document.getElementById('image-preview-container').style.display = 'block';
+        document.getElementById('text-input').value = '';
+        document.getElementById('char-count').innerText = '0/1000';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeImage() {
+    currentImageBase64 = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('image-preview-container').style.display = 'none';
+    document.getElementById('image-preview').src = '';
+}
+
+// =====================================================
+// CORE: PROCESS CORRECTION via Claude API
+// =====================================================
+async function processCorrection() {
+    const textInput = document.getElementById('text-input').value.trim();
+    if (!textInput && !currentImageBase64) return showToast("Silakan ketik teks atau unggah foto!");
+
+    const loader = document.getElementById('loader');
+    const loaderStep = document.getElementById('loader-step');
+    loader.style.display = 'flex';
+
+    const steps = [
+        "Membaca teks Jepang...",
+        "Menganalisis tata bahasa (文法)...",
+        "Memeriksa kanji & kosakata...",
+        "Menghitung skor & menyusun laporan..."
+    ];
+    let stepIdx = 0;
+    loaderStep.innerText = steps[0];
+    const stepTimer = setInterval(() => {
+        stepIdx = (stepIdx + 1) % steps.length;
+        loaderStep.innerText = steps[stepIdx];
+    }, 1800);
+
+    const tLang = uiTexts[currentLang]?.langName || "bahasa Indonesia";
+
+    const systemPrompt = `Anda adalah guru bahasa Jepang profesional yang sangat ahli dalam mengoreksi Sakubun (karangan).
+
+TUGAS ANDA:
+1. Baca teks bahasa Jepang yang diberikan (bisa dari teks langsung atau dari gambar tulisan tangan).
+2. Temukan SEMUA kesalahan dalam teks. Kategorikan setiap kesalahan ke salah satu dari 4 kategori:
+   - "grammar" → Kesalahan tata bahasa, partikel, konjugasi kata kerja, bentuk honorifik, dll.
+   - "kanji"   → Kanji salah tulis, penggunaan kanji yang salah, seharusnya pakai kanji tapi pakai hiragana berlebihan.
+   - "vocab"   → Pilihan kata yang salah, kata tidak sesuai konteks, bentuk kata yang tidak tepat.
+   - "punct"   → Kesalahan atau ketiadaan tanda baca (。、！？「」 dll).
+3. Berikan skor dari 0 sampai 100 berdasarkan kualitas keseluruhan teks.
+4. Berikan ringkasan evaluasi singkat dalam ${tLang}.
+5. Pecah teks asli menjadi array "segments". Setiap segment adalah unit kecil (satu kata, satu partikel, satu tanda baca, atau beberapa karakter yang satu unit).
+   - Jika segment BENAR: { "text": "...", "isError": false }
+   - Jika segment SALAH: { "text": "...", "isError": true, "type": "grammar|kanji|vocab|punct", "correction": "...", "explanation": "..." }
+   - Penjelasan (explanation) HARUS dalam ${tLang}, singkat dan jelas (1-2 kalimat).
+6. Gabungan seluruh property "text" dari semua segments HARUS membentuk teks asli secara persis.
+
+KEMBALIKAN HANYA JSON VALID, TANPA TEKS LAIN, TANPA MARKDOWN, TANPA PREAMBLE:
+{
+  "score": <number 0-100>,
+  "summary": "<ringkasan evaluasi dalam ${tLang}>",
+  "correctedFullText": "<teks lengkap yang sudah diperbaiki>",
+  "segments": [
+    { "text": "私", "isError": false },
+    { "text": "わ", "isError": true, "type": "grammar", "correction": "は", "explanation": "Partikel topik 'wa' ditulis dengan 'ha' (は), bukan 'wa' (わ) dalam bentuk tertulis." }
+  ]
+}`;
+
+    let userContent;
+    if (currentImageBase64) {
+        userContent = [
+            { type: "image", source: { type: "base64", media_type: "image/jpeg", data: currentImageBase64 } },
+            { type: "text", text: "Tolong baca dan koreksi SEMUA kesalahan dalam teks bahasa Jepang pada gambar ini. Fokus pada tata bahasa, kanji, kosakata, dan tanda baca." }
+        ];
+    } else {
+        userContent = [{ type: "text", text: `Koreksi semua kesalahan dalam teks Jepang berikut ini:\n\n${textInput}` }];
+    }
+
+    try {
+        const rawText = await callClaudeAPI(systemPrompt, userContent);
+        const cleaned = rawText.replace(/```json/gi, '').replace(/```/gi, '').trim();
+        const result = JSON.parse(cleaned);
+        clearInterval(stepTimer);
+        loader.style.display = 'none';
+        handleAnalysisSuccess(result, textInput || "Teks dari gambar");
+    } catch (err) {
+        clearInterval(stepTimer);
+        loader.style.display = 'none';
+        console.error(err);
+        showToast("Gagal terhubung ke Claude API. Coba lagi.");
+    }
+}
+
+// =====================================================
+// RENDER & DATA
+// =====================================================
+function handleAnalysisSuccess(data, originalInput) {
+    data.id = Date.now().toString();
+    data.timestamp = new Date().toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    data.originalInput = originalInput;
+    data.errors = data.segments.filter(s => s.isError);
+    currentAnalysis = data;
+
+    correctionHistory.unshift(data);
+    if (correctionHistory.length > 50) correctionHistory.pop();
+    localStorage.setItem('sakubun_history_' + currentAccount.id, JSON.stringify(correctionHistory));
+
+    renderCorrectionDetail(data);
+    updateProgressData();
+    switchScreen('detail');
+    document.getElementById('text-input').value = '';
+    document.getElementById('char-count').innerText = '0/1000';
+    removeImage();
+}
+
+function renderCorrectionDetail(data) {
+    const score = data.score;
+    document.getElementById('detail-score').innerText = score;
+    const circle = document.getElementById('score-circle');
+    circle.setAttribute('stroke-dasharray', `${score}, 100`);
+    if (score >= 85) circle.style.stroke = '#10b981';
+    else if (score >= 65) circle.style.stroke = 'var(--accent)';
+    else circle.style.stroke = '#ef4444';
+
+    document.getElementById('detail-summary').innerText = data.summary || '–';
+    document.getElementById('error-count-badge').innerText = `${data.errors.length} kesalahan`;
+
+    const origDiv = document.getElementById('text-display-orig');
+    const errDiv = document.getElementById('errors-container');
+    const noErrMsg = document.getElementById('no-error-msg');
+    origDiv.innerHTML = '';
+    errDiv.innerHTML = '';
+
+    const t = uiTexts[currentLang] || uiTexts.id;
+    const typeMap = {
+        grammar: { label: t.typeGrammar, badge: 'badge-grammar', cls: 'et-grammar', icon: 'ph-text-aa' },
+        kanji:   { label: t.typeKanji,   badge: 'badge-kanji',   cls: 'et-kanji',   icon: 'ph-translate' },
+        vocab:   { label: t.typeVocab,   badge: 'badge-vocab',   cls: 'et-vocab',   icon: 'ph-book-open-text' },
+        punct:   { label: t.typePunct,   badge: 'badge-punct',   cls: 'et-punct',   icon: 'ph-quotes' }
+    };
+
+    if (data.errors.length === 0) {
+        origDiv.innerText = data.correctedFullText;
+        errDiv.style.display = 'none';
+        noErrMsg.style.display = 'block';
+    } else {
+        errDiv.style.display = 'block';
+        noErrMsg.style.display = 'none';
+        let errIdx = 0;
+
+        data.segments.forEach(seg => {
+            if (seg.isError) {
+                const tInfo = typeMap[seg.type] || typeMap.grammar;
+                const myIdx = errIdx;
+
+                const span = document.createElement('span');
+                span.className = `err-span ${tInfo.cls}`;
+                span.innerText = seg.text || '?';
+                span.dataset.errId = myIdx;
+                span.onclick = () => highlightError(myIdx);
+                origDiv.appendChild(span);
+
+                const item = document.createElement('div');
+                item.className = 'err-list-item';
+                item.id = `err-item-${myIdx}`;
+                item.onclick = () => highlightError(myIdx);
+                item.innerHTML = `
+                    <div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;background:var(--bg-base);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;font-size:.8rem;color:var(--text-muted);" class="mono">${myIdx + 1}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+                            <span class="err-badge ${tInfo.badge}"><i class="ph ${tInfo.icon}" style="margin-right:3px;"></i>${tInfo.label}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;" class="jp-serif">
+                            <span style="text-decoration:line-through;color:var(--text-muted);font-size:1.05rem;">${seg.text || '[?]'}</span>
+                            <i class="ph ph-arrow-right" style="color:var(--text-muted);font-size:.9rem;flex-shrink:0;"></i>
+                            <span style="color:var(--accent);font-weight:700;font-size:1.05rem;">${seg.correction || ''}</span>
+                        </div>
+                        <p style="font-size:.82rem;color:var(--text-muted);line-height:1.55;">${seg.explanation || ''}</p>
+                    </div>
+                `;
+                errDiv.appendChild(item);
+                errIdx++;
+            } else {
+                origDiv.appendChild(document.createTextNode(seg.text));
+            }
+        });
+    }
+
+    document.getElementById('text-display-corr').innerText = data.correctedFullText || '';
+    toggleTextView('orig');
+}
+
+function toggleTextView(view) {
+    const tabO = document.getElementById('tab-orig');
+    const tabC = document.getElementById('tab-corr');
+    const dO = document.getElementById('text-display-orig');
+    const dC = document.getElementById('text-display-corr');
+
+    if (view === 'orig') {
+        tabO.style.cssText = 'padding:8px;border-radius:8px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;background:var(--bg-base);color:var(--text-main);';
+        tabC.style.cssText = 'padding:8px;border-radius:8px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text-muted);';
+        dO.style.display = 'block'; dC.style.display = 'none';
+    } else {
+        tabC.style.cssText = 'padding:8px;border-radius:8px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;background:var(--bg-base);color:var(--accent);';
+        tabO.style.cssText = 'padding:8px;border-radius:8px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text-muted);';
+        dO.style.display = 'none'; dC.style.display = 'block';
+    }
+}
+
+function highlightError(idx) {
+    document.querySelectorAll('.err-span').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.err-list-item').forEach(s => s.classList.remove('active'));
+    toggleTextView('orig');
+    const span = document.querySelector(`.err-span[data-err-id="${idx}"]`);
+    const item = document.getElementById(`err-item-${idx}`);
+    if (span) { span.classList.add('active'); span.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    if (item) item.classList.add('active');
+}
+
+function renderHistory() {
+    const container = document.getElementById('history-container');
+    const empty = document.getElementById('empty-history');
+    container.innerHTML = '';
+
+    if (correctionHistory.length === 0) {
+        empty.style.display = 'block';
+        return;
+    }
+    empty.style.display = 'none';
+
+    correctionHistory.forEach(item => {
+        let preview = item.originalInput || '';
+        if (preview.length > 32) preview = preview.substring(0, 32) + '…';
+
+        const errCount = item.errors?.length ?? 0;
+        const scoreColor = item.score >= 80 ? 'var(--accent)' : item.score >= 60 ? '#f59e0b' : '#ef4444';
+
+        const div = document.createElement('div');
+        div.className = 'panel';
+        div.style.cssText = 'padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:12px;transition:border-color .2s;';
+        div.onmouseenter = () => div.style.borderColor = 'var(--accent)';
+        div.onmouseleave = () => div.style.borderColor = 'var(--border-color)';
+        div.onclick = () => { renderCorrectionDetail(item); switchScreen('detail'); };
+        div.innerHTML = `
+            <div style="flex:1;overflow:hidden;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap;">
+                    <span style="font-size:.7rem;color:var(--text-muted);display:flex;align-items:center;gap:3px;" class="mono"><i class="ph ph-calendar-blank"></i>${item.timestamp}</span>
+                    ${errCount === 0 ? '<span style="font-size:.68rem;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);padding:1px 6px;border-radius:5px;">完璧</span>' : ''}
+                </div>
+                <p class="jp-serif" style="color:var(--text-main);font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${preview}</p>
+                <p style="font-size:.72rem;color:var(--text-muted);margin-top:4px;">${errCount} kesalahan ditemukan</p>
+            </div>
+            <div style="text-align:center;flex-shrink:0;">
+                <div style="font-size:1.5rem;font-weight:700;color:${scoreColor};" class="mono">${item.score}</div>
+                <div style="font-size:.65rem;color:var(--text-muted);" class="mono">skor</div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function updateProgressData() {
+    const total = correctionHistory.length;
+    document.getElementById('prog-total').innerText = total;
+
+    if (total === 0) {
+        document.getElementById('prog-avg-score').innerText = '–';
+        document.getElementById('prog-best').innerText = '–';
+        document.getElementById('err-breakdown').innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;">Belum ada data.</p>';
+        document.getElementById('score-bars').innerHTML = '';
+        return;
+    }
+
+    const sum = correctionHistory.reduce((a, c) => a + c.score, 0);
+    document.getElementById('prog-avg-score').innerText = (sum / total).toFixed(1);
+    document.getElementById('prog-best').innerText = Math.max(...correctionHistory.map(c => c.score));
+
+    // Error type breakdown
+    const counts = { grammar: 0, kanji: 0, vocab: 0, punct: 0 };
+    let totalErrs = 0;
+    correctionHistory.forEach(item => {
+        (item.errors || []).forEach(e => {
+            if (counts[e.type] !== undefined) { counts[e.type]++; totalErrs++; }
+        });
+    });
+    const t = uiTexts[currentLang] || uiTexts.id;
+    const typeLabels = { grammar: t.typeGrammar, kanji: t.typeKanji, vocab: t.typeVocab, punct: t.typePunct };
+    const badgeMap = { grammar: 'badge-grammar', kanji: 'badge-kanji', vocab: 'badge-vocab', punct: 'badge-punct' };
+    const bd = document.getElementById('err-breakdown');
+    bd.innerHTML = '';
+    if (totalErrs === 0) {
+        bd.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;">Tidak ada kesalahan tercatat!</p>';
+    } else {
+        Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([type, count]) => {
+            if (count === 0) return;
+            const pct = Math.round((count / totalErrs) * 100);
+            const row = document.createElement('div');
+            row.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                    <span class="err-badge ${badgeMap[type]}">${typeLabels[type]}</span>
+                    <span style="font-size:.78rem;color:var(--text-muted);" class="mono">${count}x · ${pct}%</span>
+                </div>
+                <div style="height:5px;background:var(--border-color);border-radius:3px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;transition:width .5s;"></div>
+                </div>
+            `;
+            row.style.marginBottom = '12px';
+            bd.appendChild(row);
+        });
+    }
+
+    // Score bars
+    const recent = correctionHistory.slice(0, 5).reverse();
+    const maxScore = 100;
+    const bars = document.getElementById('score-bars');
+    bars.innerHTML = '';
+    recent.forEach(item => {
+        const pct = (item.score / maxScore) * 100;
+        const color = item.score >= 80 ? '#10b981' : item.score >= 60 ? 'var(--accent)' : '#ef4444';
+        const bar = document.createElement('div');
+        bar.style.cssText = `flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;height:100%;`;
+        bar.innerHTML = `
+            <span style="font-size:.65rem;color:var(--text-muted);" class="mono">${item.score}</span>
+            <div style="width:100%;background:${color}1a;border-radius:5px 5px 0 0;height:${pct}%;position:relative;">
+                <div style="width:100%;background:${color};border-radius:5px 5px 0 0;height:100%;opacity:.8;"></div>
+            </div>
+        `;
+        bars.appendChild(bar);
+    });
+}
+
+function clearHistory() {
+    if (confirm(`Hapus semua riwayat koreksi akun "${currentAccount.name}"?`)) {
+        correctionHistory = [];
+        localStorage.removeItem('sakubun_history_' + currentAccount.id);
+        renderHistory();
+        updateProgressData();
+        showToast("Riwayat berhasil dihapus.");
+    }
+}
+</script>
+</body>
+</html>
